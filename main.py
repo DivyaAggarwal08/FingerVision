@@ -135,8 +135,6 @@
 #     cap.release()
 
 
-
-
 import cv2
 import numpy as np
 import streamlit as st
@@ -221,12 +219,18 @@ def count_fingers(thresholded, hand_segment):
 
 # Video Processor for WebRTC
 class VideoProcessor(VideoTransformerBase):
-    def __init__(self):
+    def __init__(self, mirror=True):
         self.num_frames = 0
+        self.mirror = mirror
 
     def transform(self, frame):
         global background
         img = frame.to_ndarray(format="bgr24")
+
+        # Flip if mirror mode is enabled
+        if self.mirror:
+            img = cv2.flip(img, 1)
+
         frame_copy = img.copy()
 
         roi = img[roi_top:roi_bottom, roi_right:roi_left]
@@ -256,5 +260,12 @@ class VideoProcessor(VideoTransformerBase):
 
 
 # Streamlit UI
-st.title("✋ Finger Counter")
-webrtc_streamer(key="finger-counter", video_processor_factory=VideoProcessor)
+st.title("✋ Finger Counter : ")
+
+mirror_mode = st.checkbox("Mirror Camera (Selfie View)", value=False)
+
+webrtc_streamer(
+    key="finger-counter",
+    video_processor_factory=lambda: VideoProcessor(mirror=mirror_mode)
+)
+
